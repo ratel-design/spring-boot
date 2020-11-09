@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2014 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,48 +20,35 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 
-import sample.secure.SampleSecureApplicationTests.TestConfiguration;
-
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Basic integration tests for demo application.
- * 
+ *
  * @author Dave Syer
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringApplicationConfiguration(classes = { SampleSecureApplication.class,
-		TestConfiguration.class })
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = { SampleSecureApplication.class })
 public class SampleSecureApplicationTests {
 
 	@Autowired
 	private SampleService service;
 
-	@Autowired
-	private ApplicationContext context;
-
 	private Authentication authentication;
 
 	@Before
 	public void init() {
-		AuthenticationManager authenticationManager = this.context.getBean(
-				AuthenticationManagerBuilder.class).getOrBuild();
-		this.authentication = authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken("user", "password"));
+		this.authentication = new UsernamePasswordAuthenticationToken("user", "password");
 	}
 
 	@After
@@ -70,31 +57,26 @@ public class SampleSecureApplicationTests {
 	}
 
 	@Test(expected = AuthenticationException.class)
-	public void secure() throws Exception {
-		assertEquals(this.service.secure(), "Hello Security");
+	public void secure() {
+		assertThat("Hello Security").isEqualTo(this.service.secure());
 	}
 
 	@Test
-	public void authenticated() throws Exception {
+	public void authenticated() {
 		SecurityContextHolder.getContext().setAuthentication(this.authentication);
-		assertEquals(this.service.secure(), "Hello Security");
+		assertThat("Hello Security").isEqualTo(this.service.secure());
 	}
 
 	@Test
-	public void preauth() throws Exception {
+	public void preauth() {
 		SecurityContextHolder.getContext().setAuthentication(this.authentication);
-		assertEquals(this.service.authorized(), "Hello World");
+		assertThat("Hello World").isEqualTo(this.service.authorized());
 	}
 
 	@Test(expected = AccessDeniedException.class)
-	public void denied() throws Exception {
+	public void denied() {
 		SecurityContextHolder.getContext().setAuthentication(this.authentication);
-		assertEquals(this.service.denied(), "Goodbye World");
-	}
-
-	@PropertySource("classpath:test.properties")
-	@Configuration
-	protected static class TestConfiguration {
+		assertThat("Goodbye World").isEqualTo(this.service.denied());
 	}
 
 }
